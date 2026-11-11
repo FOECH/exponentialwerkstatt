@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exponentialwerkstatt</title>
+<style>
+  :root {
+    --paper:#f6f4fa; --panel:#ffffff; --panel-2:#f0ecf7; --ink:#1d1630; --ink-2:#51486a; --ink-3:#857d99;
+    --rule:#dcd5e8; --rule-2:#ebe6f3; --accent:#4a2c7a; --accent-2:#7a5bb0; --curve:#1f4e79; --curve-2:#b03030;
+    --lin:#c55a11; --ok:#2e7d32; --bad:#b3261e; --grid:#e7e2f0; --grid-fine:#f2eff7;
+    --shadow:0 1px 2px rgba(29,22,48,.06),0 8px 24px -12px rgba(29,22,48,.2); --r:10px;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --paper:#120e1a; --panel:#1c1727; --panel-2:#251f33; --ink:#ece8f5; --ink-2:#b5abc9; --ink-3:#8a80a0;
+    --rule:#352c48; --rule-2:#2a2339; --accent:#b79cf0; --accent-2:#9a7fd6; --curve:#6aa9dd; --curve-2:#f0796b;
+    --lin:#f0a83c; --ok:#6cc472; --bad:#f0796b; --grid:#2c2540; --grid-fine:#211b2f;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6); } }
+  :root[data-theme="dark"] {
+    --paper:#120e1a; --panel:#1c1727; --panel-2:#251f33; --ink:#ece8f5; --ink-2:#b5abc9; --ink-3:#8a80a0;
+    --rule:#352c48; --rule-2:#2a2339; --accent:#b79cf0; --accent-2:#9a7fd6; --curve:#6aa9dd; --curve-2:#f0796b;
+    --lin:#f0a83c; --ok:#6cc472; --bad:#f0796b; --grid:#2c2540; --grid-fine:#211b2f;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6); }
+  * { box-sizing:border-box; }
+  html,body { margin:0; background:var(--paper); color:var(--ink);
+    font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  header { padding:14px 16px 0; max-width:1180px; margin:0 auto; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  header h1 { font-size:1.35rem; margin:0; color:var(--accent); letter-spacing:.01em; }
+  header .sub { color:var(--ink-3); font-size:.9rem; }
+  header .sp { flex:1; }
+  nav { max-width:1180px; margin:10px auto 0; padding:0 16px; display:flex; gap:6px; flex-wrap:wrap; }
+  nav button { border:1px solid var(--rule); background:var(--panel); color:var(--ink-2); padding:8px 12px;
+    border-radius:999px; font:inherit; font-size:.92rem; cursor:pointer; }
+  nav button[aria-selected="true"] { background:var(--accent); border-color:var(--accent); color:#fff; }
+  :root[data-theme="dark"] nav button[aria-selected="true"] { color:#120e1a; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) nav button[aria-selected="true"] { color:#120e1a; } }
+  main { max-width:1180px; margin:0 auto; padding:14px 16px 40px; }
+  section.tool { display:none; } section.tool.on { display:block; }
+  .grid2 { display:grid; grid-template-columns: minmax(0,1.25fr) minmax(0,1fr); gap:14px; align-items:start; }
+  @media (max-width:860px) { .grid2 { grid-template-columns:1fr; } }
+  .card { background:var(--panel); border:1px solid var(--rule-2); border-radius:var(--r); box-shadow:var(--shadow); padding:14px; }
+  .card h2 { font-size:1.05rem; margin:0 0 8px; color:var(--accent); }
+  .card h3 { font-size:.95rem; margin:12px 0 6px; color:var(--ink-2); }
+  .ctrl { display:grid; grid-template-columns: 130px 1fr 74px; gap:8px; align-items:center; margin:8px 0; }
+  .ctrl label { color:var(--ink-2); font-size:.92rem; }
+  .ctrl output { text-align:right; font-variant-numeric:tabular-nums; font-weight:600; }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  select, input[type=number], input[type=text] { font:inherit; padding:6px 8px; border:1px solid var(--rule); border-radius:8px;
+    background:var(--panel); color:var(--ink); }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:8px 0; }
+  .btn { border:1px solid var(--accent); background:var(--accent); color:#fff; padding:8px 14px; border-radius:8px;
+    font:inherit; font-size:.93rem; cursor:pointer; }
+  .btn.ghost { background:transparent; color:var(--accent); }
+  :root[data-theme="dark"] .btn:not(.ghost) { color:#120e1a; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn:not(.ghost) { color:#120e1a; } }
+  .btn:disabled { opacity:.45; cursor:default; }
+  .chk { display:flex; gap:6px; align-items:center; color:var(--ink-2); font-size:.92rem; user-select:none; }
+  .chk input { accent-color:var(--accent); width:18px; height:18px; }
+  canvas { width:100%; display:block; border-radius:8px; background:var(--panel); touch-action:none; }
+  .big { font-size:2.1rem; font-weight:700; color:var(--accent); font-variant-numeric:tabular-nums; line-height:1.1; }
+  .muted { color:var(--ink-3); font-size:.88rem; }
+  .note { background:var(--panel-2); border-radius:8px; padding:10px 12px; font-size:.93rem; color:var(--ink-2); }
+  table.t { border-collapse:collapse; width:100%; font-variant-numeric:tabular-nums; font-size:.92rem; }
+  table.t th, table.t td { border-bottom:1px solid var(--rule-2); padding:4px 8px; text-align:right; }
+  table.t th { color:var(--ink-2); font-weight:600; position:sticky; top:0; background:var(--panel); }
+  .tbox { max-height:330px; overflow:auto; }
+  .hidden { display:none !important; }
+  .formel { font-family:"Cambria Math","STIX Two Math",Georgia,serif; font-size:1.25rem; }
+  .props { display:grid; grid-template-columns:auto 1fr; gap:4px 12px; font-size:.93rem; }
+  .props dt { color:var(--ink-3); } .props dd { margin:0; font-weight:600; }
+  .quiz { margin-top:10px; } .quiz p { margin:6px 0; }
+  .opts { display:flex; flex-wrap:wrap; gap:6px; }
+  .opts button { border:1px solid var(--rule); background:var(--panel); color:var(--ink); border-radius:8px; padding:6px 10px; font:inherit; font-size:.9rem; cursor:pointer; }
+  .opts button.ok { border-color:var(--ok); background:color-mix(in srgb,var(--ok) 15%,transparent); }
+  .opts button.no { border-color:var(--bad); background:color-mix(in srgb,var(--bad) 12%,transparent); }
+  .fb { font-size:.9rem; margin-top:4px; min-height:1.2em; }
+  .fb.ok { color:var(--ok); } .fb.no { color:var(--bad); }
+  .task { font-size:1.05rem; line-height:1.55; }
+  .hint { border-left:4px solid var(--accent-2); padding:6px 10px; margin:8px 0; background:var(--panel-2); border-radius:0 8px 8px 0; font-size:.95rem; }
+  .score { font-variant-numeric:tabular-nums; color:var(--ink-2); }
+  .pill { display:inline-block; padding:2px 9px; border-radius:999px; background:var(--panel-2); color:var(--accent); font-size:.82rem; font-weight:600; }
+  ol.auf { padding-left:20px; margin:6px 0; } ol.auf li { margin:4px 0; }
+  .themebtn { border:1px solid var(--rule); background:var(--panel); color:var(--ink-2); border-radius:999px; padding:6px 10px; cursor:pointer; font:inherit; font-size:.85rem; }
+  footer { max-width:1180px; margin:0 auto; padding:0 16px 24px; color:var(--ink-3); font-size:.82rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Exponentialwerkstatt</h1>
+  <span class="sub">Kapitel 2 · 10G · SLP</span>
+  <span class="sp"></span>
+  <button class="themebtn" id="theme" type="button" aria-label="Hell/Dunkel umschalten">◐ Hell/Dunkel</button>
+</header>
+<nav role="tablist">
+  <button role="tab" data-t="t1" aria-selected="true">1 Zellteilung</button>
+  <button role="tab" data-t="t2" aria-selected="false">2 Parameterspiel</button>
+  <button role="tab" data-t="t3" aria-selected="false">3 Aufgabentrainer</button>
+  <button role="tab" data-t="t4" aria-selected="false">4 Würfelzerfall</button>
+</nav>
+<main>
+
+<!-- ======================================================= 1 Zellteilung -->
+<section class="tool on" id="t1">
+  <div class="grid2">
+    <div class="card">
+      <h2>Zellteilung in der Petrischale</h2>
+      <canvas id="petri" height="360"></canvas>
+      <div class="row" style="justify-content:space-between">
+        <div><div class="muted" id="zeitTxt">Zeit: 0 h 0 min</div><div class="big" id="anzTxt">1</div><div class="muted">Bakterien</div></div>
+        <div class="row">
+          <button class="btn ghost" id="z_zurueck" type="button">⏮ Start</button>
+          <button class="btn ghost" id="z_schritt" type="button">+1 Teilung</button>
+          <button class="btn" id="z_play" type="button">▶ Abspielen</button>
+        </div>
+      </div>
+      <div class="ctrl"><label for="z_t">Zeit</label><input type="range" id="z_t" min="0" max="30" step="1" value="0"><output id="z_to">0 h</output></div>
+    </div>
+    <div class="card">
+      <h2>Einstellungen</h2>
+      <div class="ctrl"><label for="z_n0">Startanzahl</label><input type="range" id="z_n0" min="1" max="100" step="1" value="1"><output id="z_n0o">1</output></div>
+      <div class="ctrl"><label for="z_tz">Teilung alle</label>
+        <select id="z_tz"><option value="10">10 min</option><option value="15">15 min</option><option value="20" selected>20 min</option><option value="30">30 min</option><option value="60">60 min</option></select><span></span></div>
+      <div class="ctrl"><label for="z_dauer">Beobachtung</label>
+        <select id="z_dauer"><option value="2">2 h</option><option value="5">5 h</option><option value="10" selected>10 h</option><option value="24">24 h</option></select><span></span></div>
+      <div class="row">
+        <label class="chk"><input type="checkbox" id="z_tab"> Wertetabelle</label>
+        <label class="chk"><input type="checkbox" id="z_graph"> Graph</label>
+        <label class="chk"><input type="checkbox" id="z_lin"> lineares Wachstum zum Vergleich</label>
+        <label class="chk"><input type="checkbox" id="z_quot"> Quotienten zeigen</label>
+      </div>
+      <h3>Erst schätzen, dann aufdecken</h3>
+      <div class="row">
+        <span>Wie viele Bakterien sind es am Ende der Beobachtung?</span>
+        <input type="number" id="z_guess" min="0" style="width:150px" placeholder="Schätzung">
+        <button class="btn ghost" id="z_reveal" type="button">Aufdecken</button>
+      </div>
+      <div class="fb" id="z_fb"></div>
+      <div class="note" id="z_formel">Nach jeder Teilung verdoppelt sich die Anzahl: <b>N = N₀ · 2ⁿ</b> (n = Anzahl der Teilungen).</div>
+    </div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="card hidden" id="z_graphcard"><h2>Graph</h2><canvas id="z_plot" height="320"></canvas>
+      <div class="muted" id="z_plotinfo"></div></div>
+    <div class="card hidden" id="z_tabcard"><h2>Wertetabelle</h2><div class="tbox"><table class="t" id="z_table"></table></div></div>
+  </div>
+</section>
+
+<!-- ======================================================= 2 Parameterspiel -->
+<section class="tool" id="t2">
+  <div class="grid2">
+    <div class="card">
+      <h2>f(x) = a · b<sup>x</sup></h2>
+      <canvas id="p_plot" height="420"></canvas>
+      <div class="row">
+        <label class="chk"><input type="checkbox" id="p_spiegel"> Spiegeln: (1/b)ˣ = b⁻ˣ</label>
+        <label class="chk"><input type="checkbox" id="p_ref"> Vergleichsgraph 2ˣ</label>
+        <label class="chk"><input type="checkbox" id="p_pkt" checked> Punkte (0 | a) und (1 | a·b)</label>
+        <label class="chk"><input type="checkbox" id="p_neg"> auch a &lt; 0 erlauben</label>
+        <label class="chk"><input type="checkbox" id="p_shift"> Verschieben (x₀ und d)</label>
+      </div>
+      <div class="ctrl"><label for="p_zoom">Ausschnitt x</label><input type="range" id="p_zoom" min="3" max="15" step="1" value="5"><output id="p_zoomo">±5</output></div>
+    </div>
+    <div class="card">
+      <div class="formel" id="p_term" style="margin-bottom:6px">f(x) = 1 · 2<sup>x</sup></div>
+      <div class="ctrl"><label for="p_a">a (Anfangswert)</label><input type="range" id="p_a" min="0.1" max="5" step="0.1" value="1"><output id="p_ao">1</output></div>
+      <div class="ctrl"><label for="p_b">b (Faktor)</label><input type="range" id="p_b" min="0.1" max="4" step="0.05" value="2"><output id="p_bo">2</output></div>
+      <div id="p_shiftbox" class="hidden">
+        <div class="ctrl"><label for="p_x0">x₀ (nach rechts)</label><input type="range" id="p_x0" min="-5" max="5" step="0.5" value="0"><output id="p_x0o">0</output></div>
+        <div class="ctrl"><label for="p_d">d (nach oben)</label><input type="range" id="p_d" min="-5" max="5" step="0.5" value="0"><output id="p_do">0</output></div>
+      </div>
+      <dl class="props" id="p_props"></dl>
+      <h3>Erkundungsaufträge (Skript 2.2)</h3>
+      <ol class="auf">
+        <li>Stelle a = 1 ein und verändere b. Was passiert bei b &gt; 1, bei 0 &lt; b &lt; 1, bei b = 1?</li>
+        <li>Durch welchen Punkt gehen alle Graphen mit a = 1? Warum?</li>
+        <li>Stelle b = 2 ein und verändere a. Wo schneidet der Graph die y-Achse?</li>
+        <li>Kann der Graph die x-Achse schneiden? Vergrößere den Ausschnitt.</li>
+        <li>Schalte „Spiegeln“ ein. Was fällt dir auf?</li>
+        <li>Setze den Haken bei „Verschieben“. Verändere d: Was passiert mit dem Graphen und der Asymptote? In welche Richtung wandert der Graph bei x₀ = 3?</li>
+      </ol>
+      <h3>Selbstcheck</h3>
+      <div id="p_quiz"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================= 3 Aufgabentrainer -->
+<section class="tool" id="t3">
+  <div class="grid2">
+    <div class="card">
+      <h2>Aufgabentrainer</h2>
+      <div class="row">
+        <label for="a_typ">Typ</label>
+        <select id="a_typ">
+          <option value="0">gemischt</option>
+          <option value="1">Typ 1: f(x) gesucht</option>
+          <option value="2">Typ 2: a gesucht</option>
+          <option value="3">Typ 3: b bzw. Prozentsatz gesucht</option>
+          <option value="4">Typ 4: x (Zeit) gesucht</option>
+          <option value="5">Gleichung aus zwei Punkten</option>
+          <option value="6">Logarithmen im Kopf</option>
+        </select>
+        <button class="btn" id="a_neu" type="button">Neue Aufgabe</button>
+        <span class="score" id="a_score">0 / 0 richtig</span>
+      </div>
+      <div class="note" style="margin:10px 0"><span class="pill" id="a_pill">Typ</span>
+        <div class="task" id="a_text" style="margin-top:6px"></div></div>
+      <div class="row">
+        <label for="a_in" id="a_lbl">Ergebnis:</label>
+        <input type="text" id="a_in" inputmode="decimal" style="width:160px" autocomplete="off">
+        <span id="a_einheit" class="muted"></span>
+        <button class="btn" id="a_pruef" type="button">Prüfen</button>
+      </div>
+      <div class="fb" id="a_fb"></div>
+      <div class="row">
+        <button class="btn ghost" id="a_t1" type="button">Tipp 1</button>
+        <button class="btn ghost" id="a_t2" type="button">Tipp 2</button>
+        <button class="btn ghost" id="a_loes" type="button">Lösung</button>
+      </div>
+      <div id="a_hints"></div>
+      <p class="muted">Gib Kommazahlen mit Komma oder Punkt ein. Geprüft wird auf zwei Nachkommastellen genau (kleine Rundungsunterschiede werden toleriert).</p>
+    </div>
+    <div class="card">
+      <h2>Die vier Aufgabentypen</h2>
+      <table class="t" style="text-align:left">
+        <tr><th style="text-align:left">Typ</th><th style="text-align:left">gesucht</th><th style="text-align:left">Werkzeug</th></tr>
+        <tr><td style="text-align:left">1</td><td style="text-align:left">Endwert f(x)</td><td style="text-align:left">einsetzen</td></tr>
+        <tr><td style="text-align:left">2</td><td style="text-align:left">Anfangswert a</td><td style="text-align:left">a = f(x) : bˣ</td></tr>
+        <tr><td style="text-align:left">3</td><td style="text-align:left">Faktor b</td><td style="text-align:left">b = ⁿ√(f(n) : a)</td></tr>
+        <tr><td style="text-align:left">4</td><td style="text-align:left">Zeit x</td><td style="text-align:left">x = log<sub>b</sub>(c : a)</td></tr>
+      </table>
+      <h3>Prozent ↔ Faktor</h3>
+      <p class="muted" style="margin:0">Zunahme um p % → b = 1 + p/100 · Abnahme um p % → b = 1 − p/100</p>
+      <h3>Halbwerts- und Verdopplungszeit</h3>
+      <p class="muted" style="margin:0">T<sub>H</sub> = log<sub>b</sub>(0,5) · T<sub>D</sub> = log<sub>b</sub>(2)</p>
+      <h3>Antwortsatz nicht vergessen!</h3>
+      <p class="muted" style="margin:0">Mit Einheit – und überlege, ob du auf- oder abrunden musst.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================= 4 Würfelzerfall -->
+<section class="tool" id="t4">
+  <div class="grid2">
+    <div class="card">
+      <h2>Zerfall im Würfelexperiment</h2>
+      <p class="muted" style="margin-top:0">In jeder Runde wird mit allen Würfeln gewürfelt. Jede Sechs „zerfällt“ und wird entfernt.</p>
+      <canvas id="w_dice" height="230"></canvas>
+      <div class="row" style="justify-content:space-between">
+        <div><div class="muted" id="w_runde">Runde 0</div><div class="big" id="w_n">60</div><div class="muted">Würfel übrig</div></div>
+        <div class="row">
+          <button class="btn" id="w_wurf" type="button">🎲 Würfeln</button>
+          <button class="btn ghost" id="w_alle" type="button">10 Runden</button>
+          <button class="btn ghost" id="w_neu" type="button">Neu</button>
+        </div>
+      </div>
+      <div class="ctrl"><label for="w_n0">Startanzahl</label><input type="range" id="w_n0" min="10" max="500" step="10" value="60"><output id="w_n0o">60</output></div>
+      <div class="row"><label class="chk"><input type="checkbox" id="w_modell" checked> Modell N(n) = N₀ · (5/6)ⁿ zeigen</label>
+        <label class="chk"><input type="checkbox" id="w_mittel"> Mittelwert aus 20 Durchgängen</label></div>
+    </div>
+    <div class="card">
+      <h2>Graph und Tabelle</h2>
+      <canvas id="w_plot" height="280"></canvas>
+      <div class="tbox" style="max-height:220px"><table class="t" id="w_table"></table></div>
+      <div class="note" style="margin-top:8px">Halbwertszeit im Modell: T<sub>H</sub> = log<sub>5/6</sub>(0,5) ≈ 3,8 Würfe. Woran liegt es, dass das Experiment vom Modell abweicht?</div>
+    </div>
+  </div>
+</section>
+</main>
+<footer>Exponentialwerkstatt · Begleitmaterial zum Skript „Kapitel 2: Exponentialfunktionen“ · SLP 10G 2026/27 · funktioniert ohne Anmeldung und ohne Datenübertragung.</footer>
+
+<script>
+"use strict";
+// ---------------------------------------------------------------- Hilfen
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function de(x, n = 2) {
+  if (!isFinite(x)) return "–";
+  return x.toLocaleString("de-DE", { minimumFractionDigits: n, maximumFractionDigits: n }).replace("-", "−");
+}
+function deK(x, max = 4) { // kurz, ohne unnoetige Nullen
+  if (!isFinite(x)) return "–";
+  return x.toLocaleString("de-DE", { maximumFractionDigits: max }).replace("-", "−");
+}
+function kurzZahl(y) {
+  const a = Math.abs(y);
+  if (a >= 1e9) return deK(y / 1e9, 2) + " Mrd.";
+  if (a >= 1e6) return deK(y / 1e6, 2) + " Mio.";
+  if (a >= 1e4) return deK(y / 1e3, 1) + " Tsd.";
+  return deK(y, 2);
+}
+function ganz(x) {
+  if (x >= 1e15) return x.toExponential(3).replace(".", ",").replace("e+", " · 10^");
+  return Math.round(x).toLocaleString("de-DE");
+}
+const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const logb = (b, y) => Math.log(y) / Math.log(b);
+const sup = s => String(s).replace(/[0-9n,x−\-t]/g, c => ({"0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹","n":"ⁿ","x":"ˣ","t":"ᵗ",",":"˒","−":"⁻","-":"⁻"}[c] || c));
+
+function setupCanvas(cv) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = cv.clientWidth, h = cv.height_css || (cv.height_css = cv.getAttribute("height") * 1);
+  cv.style.height = h + "px";
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w, h };
+}
+function niceStep(range, ziel = 6) {
+  const raw = range / ziel, p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p;
+  return (m < 1.5 ? 1 : m < 3 ? 2 : m < 7 ? 5 : 10) * p;
+}
+// generisches Koordinatensystem
+function achsen(ctx, w, h, xr, yr, opt = {}) {
+  const L = opt.L ?? 48, R = 14, T = 14, B = opt.B ?? 30;
+  const X = x => L + (x - xr[0]) / (xr[1] - xr[0]) * (w - L - R);
+  const Y = y => h - B - (y - yr[0]) / (yr[1] - yr[0]) * (h - T - B);
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = css("--panel"); ctx.fillRect(0, 0, w, h);
+  const sx = opt.sx || niceStep(xr[1] - xr[0], w / 70), sy = opt.sy || niceStep(yr[1] - yr[0], h / 45);
+  ctx.lineWidth = 1; ctx.strokeStyle = css("--grid"); ctx.font = "12px system-ui"; ctx.fillStyle = css("--ink-3");
+  for (let x = Math.ceil(xr[0] / sx) * sx; x <= xr[1] + 1e-9; x += sx) {
+    ctx.beginPath(); ctx.moveTo(X(x), T); ctx.lineTo(X(x), h - B); ctx.stroke();
+    ctx.textAlign = "center"; ctx.fillText(opt.fx ? opt.fx(x) : deK(+x.toFixed(6)), X(x), h - B + 16);
+  }
+  for (let y = Math.ceil(yr[0] / sy) * sy; y <= yr[1] + 1e-9; y += sy) {
+    ctx.beginPath(); ctx.moveTo(L, Y(y)); ctx.lineTo(w - R, Y(y)); ctx.stroke();
+    ctx.textAlign = "right"; ctx.fillText(opt.fy ? opt.fy(y) : deK(+y.toFixed(6)), L - 6, Y(y) + 4);
+  }
+  ctx.strokeStyle = css("--ink-2"); ctx.lineWidth = 1.4;
+  const x0 = Math.min(Math.max(0, xr[0]), xr[1]), y0 = Math.min(Math.max(0, yr[0]), yr[1]);
+  ctx.beginPath(); ctx.moveTo(L, Y(y0)); ctx.lineTo(w - R, Y(y0)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(X(x0), T); ctx.lineTo(X(x0), h - B); ctx.stroke();
+  ctx.fillStyle = css("--ink-2"); ctx.textAlign = "right";
+  if (opt.xl) ctx.fillText(opt.xl, w - R, Y(y0) - 6);
+  ctx.textAlign = "left"; if (opt.yl) ctx.fillText(opt.yl, X(x0) + 6, T + 10);
+  return { X, Y };
+}
+function kurve(ctx, X, Y, f, xr, yr, farbe, breite = 2.5, dash = []) {
+  ctx.save(); ctx.strokeStyle = farbe; ctx.lineWidth = breite; ctx.setLineDash(dash);
+  ctx.beginPath(); let an = false; const n = 600;
+  const ymax = yr[1] + (yr[1] - yr[0]) * 2, ymin = yr[0] - (yr[1] - yr[0]) * 2;
+  for (let i = 0; i <= n; i++) {
+    const x = xr[0] + (xr[1] - xr[0]) * i / n; let y = f(x);
+    if (!isFinite(y)) { an = false; continue; }
+    y = Math.max(ymin, Math.min(ymax, y));
+    if (!an) { ctx.moveTo(X(x), Y(y)); an = true; } else ctx.lineTo(X(x), Y(y));
+  }
+  ctx.stroke(); ctx.restore();
+}
+function punkt(ctx, x, y, farbe, r = 4.5, text, dx = 8, dy = -8) {
+  ctx.fillStyle = farbe; ctx.beginPath(); ctx.arc(x, y, r, 0, 2 * Math.PI); ctx.fill();
+  if (text) { ctx.font = "600 12px system-ui"; ctx.textAlign = "left"; ctx.fillText(text, x + dx, y + dy); }
+}
+
+// ---------------------------------------------------------------- Tabs + Theme
+document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll("nav button").forEach(x => x.setAttribute("aria-selected", x === b));
+  document.querySelectorAll("section.tool").forEach(s => s.classList.toggle("on", s.id === b.dataset.t));
+  try { localStorage.setItem("ew_tab", b.dataset.t); } catch (e) {}
+  alles();
+}));
+$("theme").addEventListener("click", () => {
+  const r = document.documentElement, dunkel = matchMedia("(prefers-color-scheme: dark)").matches;
+  const jetzt = r.dataset.theme || (dunkel ? "dark" : "light");
+  r.dataset.theme = jetzt === "dark" ? "light" : "dark";
+  try { localStorage.setItem("ew_theme", r.dataset.theme); } catch (e) {}
+  alles();
+});
+
+// ================================================================ 1 Zellteilung
+const Z = { k: 0, timer: null, punkte: [] };
+function zParam() {
+  const n0 = +$("z_n0").value, tz = +$("z_tz").value, dauer = +$("z_dauer").value;
+  const kmax = Math.round(dauer * 60 / tz);
+  return { n0, tz, dauer, kmax };
+}
+function zZeit(min) { const h = Math.floor(min / 60), m = Math.round(min % 60); return `${h}:${String(m).padStart(2, "0")} h`; }
+function zInit() {
+  const { kmax } = zParam();
+  $("z_t").max = kmax; if (Z.k > kmax) Z.k = kmax; $("z_t").value = Z.k;
+  // Positionen fuer bis zu 4096 Bakterien in Petrischale (Sonnenblumenmuster)
+  Z.punkte = []; const g = Math.PI * (3 - Math.sqrt(5));
+  for (let i = 0; i < 4096; i++) { const r = Math.sqrt((i + 0.5) / 4096), th = i * g; Z.punkte.push([r * Math.cos(th), r * Math.sin(th)]); }
+  // Reihenfolge mischen (deterministisch)
+  let s = 7; for (let i = Z.punkte.length - 1; i > 0; i--) { s = (s * 9301 + 49297) % 233280; const j = Math.floor(s / 233280 * (i + 1)); [Z.punkte[i], Z.punkte[j]] = [Z.punkte[j], Z.punkte[i]]; }
+  zZeichne();
+}
+function zZeichne() {
+  const { n0, tz, dauer, kmax } = zParam();
+  const N = n0 * Math.pow(2, Z.k);
+  $("z_to").textContent = deK(Z.k * tz / 60, 2) + " h";
+  $("zeitTxt").textContent = `Zeit: ${zZeit(Z.k * tz)}  ·  ${Z.k} Teilung${Z.k === 1 ? "" : "en"}`;
+  $("anzTxt").textContent = ganz(N);
+  $("z_formel").innerHTML = `Nach jeder Teilung verdoppelt sich die Anzahl: <b>N = ${n0} · 2${sup("n")}</b> (n = Anzahl der Teilungen). ` +
+    `Pro Stunde gibt es ${deK(60 / tz)} Teilungen, also Faktor <b>2${sup(deK(60 / tz))} = ${deK(Math.pow(2, 60 / tz), 3)}</b> pro Stunde: ` +
+    `<b>N(t) = ${n0} · ${deK(Math.pow(2, 60 / tz), 3)}${sup("t")}</b> (t in h).`;
+  // Petrischale
+  const cv = $("petri"), { ctx, w, h } = setupCanvas(cv);
+  ctx.clearRect(0, 0, w, h);
+  const cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2 - 12;
+  ctx.fillStyle = css("--panel-2"); ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.fill();
+  ctx.strokeStyle = css("--rule"); ctx.lineWidth = 3; ctx.stroke();
+  const zeig = Math.min(N, 4096);
+  const rr = Math.max(1.6, Math.min(9, R * 0.9 / Math.sqrt(Math.max(zeig, 1))));
+  ctx.fillStyle = css("--accent");
+  for (let i = 0; i < zeig; i++) {
+    const [px, py] = Z.punkte[i]; const x = cx + px * (R - rr - 4), y = cy + py * (R - rr - 4);
+    ctx.beginPath(); ctx.ellipse(x, y, rr * 1.25, rr * 0.8, (i * 0.7) % Math.PI, 0, 2 * Math.PI); ctx.fill();
+  }
+  if (N > 4096) {
+    ctx.fillStyle = css("--panel"); ctx.globalAlpha = 0.85;
+    ctx.fillRect(cx - 150, cy - 26, 300, 52); ctx.globalAlpha = 1;
+    ctx.fillStyle = css("--ink"); ctx.font = "600 14px system-ui"; ctx.textAlign = "center";
+    ctx.fillText("Zu viele zum Zeichnen!", cx, cy - 4);
+    ctx.font = "13px system-ui"; ctx.fillText(`gezeichnet: 4096 von ${ganz(N)}`, cx, cy + 16);
+  }
+  // Tabelle
+  $("z_tabcard").classList.toggle("hidden", !$("z_tab").checked);
+  $("z_graphcard").classList.toggle("hidden", !$("z_graph").checked);
+  const lin = $("z_lin").checked, quot = $("z_quot").checked;
+  if ($("z_tab").checked) {
+    let html = `<tr><th>Zeit</th><th>n</th><th>exponentiell</th>${quot ? "<th>Quotient</th>" : ""}${lin ? "<th>linear (+" + n0 + ")</th>" : ""}${lin && quot ? "<th>Differenz</th>" : ""}</tr>`;
+    for (let k = 0; k <= Z.k; k++) {
+      const e = n0 * Math.pow(2, k), l = n0 * (k + 1);
+      html += `<tr><td>${zZeit(k * tz)}</td><td>${k}</td><td>${ganz(e)}</td>${quot ? `<td>${k ? "· 2" : ""}</td>` : ""}${lin ? `<td>${ganz(l)}</td>` : ""}${lin && quot ? `<td>${k ? "+ " + n0 : ""}</td>` : ""}</tr>`;
+    }
+    $("z_table").innerHTML = html;
+    const box = $("z_table").parentElement; box.scrollTop = box.scrollHeight;
+  }
+  if ($("z_graph").checked) {
+    const pv = $("z_plot"), P = setupCanvas(pv);
+    const tmax = Math.max(Z.k * tz / 60, tz / 60) , ymax = n0 * Math.pow(2, Math.max(Z.k, 1)) * 1.1;
+    const { X, Y } = achsen(P.ctx, P.w, P.h, [0, tmax * 1.02], [0, ymax], { xl: "t in h", yl: "N", L: 74, fy: y => kurzZahl(y) });
+    const f = t => n0 * Math.pow(2, t * 60 / tz);
+    kurve(P.ctx, X, Y, f, [0, Z.k * tz / 60], [0, ymax], css("--curve-soft") || css("--curve"), 1.5, [5, 4]);
+    for (let k = 0; k <= Z.k; k++) punkt(P.ctx, X(k * tz / 60), Y(f(k * tz / 60)), css("--curve"), 4);
+    if (lin) { for (let k = 0; k <= Z.k; k++) punkt(P.ctx, X(k * tz / 60), Y(n0 * (k + 1)), css("--lin"), 3.5); }
+    $("z_plotinfo").textContent = "Punkte: gezählte Werte nach jeder Teilung · gestrichelt: Exponentialfunktion" + (lin ? " · orange: lineares Wachstum" : "");
+  }
+}
+function zStop() { clearInterval(Z.timer); Z.timer = null; $("z_play").textContent = "▶ Abspielen"; }
+$("z_play").addEventListener("click", () => {
+  if (Z.timer) return zStop();
+  const { kmax } = zParam(); if (Z.k >= kmax) Z.k = 0;
+  $("z_play").textContent = "⏸ Pause";
+  Z.timer = setInterval(() => { const { kmax } = zParam(); if (Z.k >= kmax) return zStop(); Z.k++; $("z_t").value = Z.k; zZeichne(); }, 550);
+});
+$("z_schritt").addEventListener("click", () => { zStop(); const { kmax } = zParam(); if (Z.k < kmax) Z.k++; $("z_t").value = Z.k; zZeichne(); });
+$("z_zurueck").addEventListener("click", () => { zStop(); Z.k = 0; $("z_t").value = 0; zZeichne(); });
+$("z_t").addEventListener("input", () => { zStop(); Z.k = +$("z_t").value; zZeichne(); });
+["z_n0", "z_tz", "z_dauer"].forEach(id => $(id).addEventListener("input", () => { $("z_n0o").textContent = $("z_n0").value; zInit(); }));
+["z_tab", "z_graph", "z_lin", "z_quot"].forEach(id => $(id).addEventListener("change", zZeichne));
+$("z_reveal").addEventListener("click", () => {
+  const { n0, kmax, dauer } = zParam(), wahr = n0 * Math.pow(2, kmax), g = parseFloat(($("z_guess").value || "").replace(",", "."));
+  zStop(); Z.k = kmax; $("z_t").value = kmax; zZeichne();
+  const fb = $("z_fb");
+  if (!isFinite(g) || g <= 0) { fb.className = "fb"; fb.textContent = `Nach ${dauer} h sind es ${ganz(wahr)} Bakterien.`; return; }
+  const q = wahr / g;
+  fb.className = "fb " + (q < 2 && q > 0.5 ? "ok" : "no");
+  fb.textContent = `Nach ${dauer} h sind es ${ganz(wahr)} Bakterien. ` + (q >= 2 ? `Deine Schätzung war ${q >= 1000 ? "über " + ganz(Math.floor(q / 10 ** Math.floor(Math.log10(q))) * 10 ** Math.floor(Math.log10(q))) + "-mal" : deK(q, 1) + "-mal"} zu klein – exponentielles Wachstum wird fast immer unterschätzt!` : q <= 0.5 ? "Deine Schätzung war zu groß." : "Sehr gut geschätzt!");
+});
+
+// ================================================================ 2 Parameterspiel
+function pZeichne() {
+  const neg = $("p_neg").checked;
+  $("p_a").min = neg ? -5 : 0.1;
+  if (!neg && +$("p_a").value <= 0) $("p_a").value = 1;
+  let a = +$("p_a").value; if (Math.abs(a) < 0.05) a = 0.1;
+  const b = +$("p_b").value, Z_ = +$("p_zoom").value;
+  const sh = $("p_shift").checked; $("p_shiftbox").classList.toggle("hidden", !sh);
+  const x0 = sh ? +$("p_x0").value : 0, d = sh ? +$("p_d").value : 0;
+  $("p_ao").textContent = deK(a, 2); $("p_bo").textContent = deK(b, 2); $("p_zoomo").textContent = "±" + Z_;
+  $("p_x0o").textContent = deK(x0, 1); $("p_do").textContent = deK(d, 1);
+  const aT = deK(a, 2), bT = deK(b, 2);
+  const expT = x0 === 0 ? "x" : x0 > 0 ? `x − ${deK(x0, 1)}` : `x + ${deK(-x0, 1)}`;
+  const dT = d === 0 ? "" : d > 0 ? ` + ${deK(d, 1)}` : ` − ${deK(-d, 1)}`;
+  $("p_term").innerHTML = `f(x) = ${aT} · ${bT}<sup>${expT}</sup>${dT}` + (Math.abs(b - 1) < 1e-9 ? "  <span class='muted'>(b = 1: keine Exponentialfunktion!)</span>" : "");
+  const cv = $("p_plot"), { ctx, w, h } = setupCanvas(cv);
+  const xr = [-Z_, Z_], ytop = Math.max(Z_ * 1.3, 6);
+  const yr = (neg && a < 0 ? [-ytop, ytop * 0.35] : [-ytop * 0.2, ytop]).map(v => v + d);
+  const { X, Y } = achsen(ctx, w, h, xr, yr, { xl: "x", yl: "y", sx: Z_ > 8 ? 2 : 1, sy: niceStep(yr[1] - yr[0], 10) });
+  const f = x => a * Math.pow(b, x - x0) + d;
+  if ($("p_ref").checked) kurve(ctx, X, Y, x => Math.pow(2, x), xr, yr, css("--ink-3"), 1.5, [3, 4]);
+  if ($("p_spiegel").checked) kurve(ctx, X, Y, x => a * Math.pow(1 / b, x + x0) + d, xr, yr, css("--curve-2"), 2.5, [7, 5]);
+  // Asymptote
+  ctx.save(); ctx.strokeStyle = css("--accent-2"); ctx.setLineDash([2, 4]); ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(X(xr[0]), Y(d)); ctx.lineTo(X(xr[1]), Y(d)); ctx.stroke(); ctx.restore();
+  if (d !== 0) { ctx.fillStyle = css("--accent-2"); ctx.font = "12px system-ui"; ctx.textAlign = "right"; ctx.fillText("Asymptote y = " + deK(d, 1), X(xr[1]) - 4, Y(d) - 6); }
+  kurve(ctx, X, Y, f, xr, yr, css("--curve"), 3);
+  if ($("p_pkt").checked) {
+    if (f(0) <= yr[1] && f(0) >= yr[0]) punkt(ctx, X(0), Y(f(0)), css("--accent"), 5, `(0 | ${deK(f(0), 2)})`);
+    if (f(1) <= yr[1] && f(1) >= yr[0]) punkt(ctx, X(1), Y(f(1)), css("--accent"), 5, `(1 | ${deK(f(1), 2)})`, 8, 14);
+  }
+  // Legende
+  ctx.font = "13px system-ui"; ctx.textAlign = "left"; let ly = 20;
+  const leg = (c, t, d) => { ctx.strokeStyle = c; ctx.lineWidth = 2.5; ctx.setLineDash(d); ctx.beginPath(); ctx.moveTo(60, ly); ctx.lineTo(86, ly); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = css("--ink-2"); ctx.fillText(t, 92, ly + 4); ly += 18; };
+  leg(css("--curve"), sh ? "f(x) = a · b^(x − x₀) + d" : "f(x) = a · bˣ", []);
+  if ($("p_spiegel").checked) leg(css("--curve-2"), "a · (1/b)ˣ = a · b⁻ˣ", [7, 5]);
+  if ($("p_ref").checked) leg(css("--ink-3"), "2ˣ", [3, 4]);
+  // Eigenschaften
+  let mono, asy;
+  if (Math.abs(b - 1) < 1e-9) { mono = "konstant"; asy = "–"; }
+  else {
+    const steigt = (b > 1) === (a > 0);
+    mono = steigt ? "streng monoton steigend" : "streng monoton fallend";
+    asy = (d === 0 ? "x-Achse (y = 0)" : "y = " + deK(d, 1)) + " für x → " + (b > 1 ? "−∞" : "+∞");
+  }
+  const dTxt = deK(d, 1);
+  const W = Math.abs(b - 1) < 1e-9 ? "W = {" + deK(a + d, 2) + "}" : d === 0 ? (a > 0 ? "W = ℝ⁺ (alle positiven Zahlen)" : "W = ℝ⁻ (alle negativen Zahlen)") : (a > 0 ? "alle y > " + dTxt : "alle y < " + dTxt);
+  let null_ = "keine";
+  if (Math.abs(b - 1) > 1e-9 && a * d < 0) null_ = "x ≈ " + deK(x0 + Math.log(-d / a) / Math.log(b), 2);
+  $("p_props").innerHTML = `<dt>Definitionsmenge</dt><dd>D = ℝ</dd><dt>Wertemenge</dt><dd>${W}</dd>` +
+    `<dt>Schnittpunkt y-Achse</dt><dd>(0 | ${deK(f(0), 3)})</dd><dt>Nullstellen</dt><dd>${null_}</dd><dt>Monotonie</dt><dd>${mono}</dd><dt>Asymptote</dt><dd>${asy}</dd>` +
+    (Math.abs(b - 1) > 1e-9 ? `<dt>Prozent</dt><dd>${b > 1 ? "+ " + deK((b - 1) * 100, 1) + " %" : "− " + deK((1 - b) * 100, 1) + " %"} pro Schritt</dd>` : "");
+}
+["p_a", "p_b", "p_zoom", "p_x0", "p_d"].forEach(id => $(id).addEventListener("input", pZeichne));
+["p_spiegel", "p_ref", "p_pkt", "p_neg", "p_shift"].forEach(id => $(id).addEventListener("change", pZeichne));
+const QUIZ = [
+  ["Der Graph von f(x) = 0,7ˣ ist …", ["steigend", "fallend", "konstant"], 1, "0 < 0,7 < 1 → fallend."],
+  ["Alle Graphen von f(x) = bˣ gehen durch …", ["(1 | 0)", "(0 | 1)", "(0 | 0)"], 1, "b⁰ = 1 für jedes b."],
+  ["Wo schneidet f(x) = 3 · 2ˣ die y-Achse?", ["(0 | 2)", "(0 | 3)", "(0 | 6)"], 1, "f(0) = 3 · 2⁰ = 3 · 1 = 3."],
+  ["Wie viele Nullstellen hat f(x) = 2 · 0,5ˣ?", ["keine", "eine", "zwei"], 0, "Die x-Achse ist Asymptote – sie wird nie erreicht."],
+  ["Welcher Graph ist das Spiegelbild von 4ˣ an der y-Achse?", ["(−4)ˣ", "0,25ˣ", "4 · (−x)"], 1, "4⁻ˣ = (1/4)ˣ = 0,25ˣ."],
+  ["Bei f(x) = 5 · 3ˣ: Was passiert, wenn x um 1 größer wird?", ["+ 3", "· 3", "· 5"], 1, "Funktionaleigenschaft: f(x + 1) = b · f(x)."],
+  ["Welche Asymptote hat f(x) = 2ˣ − 4?", ["die x-Achse", "y = −4", "y = 4"], 1, "Der Graph ist um 4 nach unten verschoben – die Asymptote wandert mit."],
+  ["Der Graph von 2^(x − 3) ist gegenüber 2ˣ verschoben um 3 …", ["nach links", "nach rechts", "nach unten"], 1, "Minus heißt rechts: Erst bei x = 3 ist der Exponent 0."],
+];
+function pQuiz() {
+  const box = $("p_quiz"); box.innerHTML = "";
+  QUIZ.forEach(([q, opts, rich, erkl], qi) => {
+    const d = document.createElement("div"); d.className = "quiz";
+    d.innerHTML = `<p>${qi + 1}. ${q}</p><div class="opts"></div><div class="fb"></div>`;
+    opts.forEach((o, oi) => {
+      const bt = document.createElement("button"); bt.type = "button"; bt.textContent = o;
+      bt.addEventListener("click", () => {
+        d.querySelectorAll(".opts button").forEach(x => x.className = "");
+        const ok = oi === rich; bt.className = ok ? "ok" : "no";
+        const fb = d.querySelector(".fb"); fb.className = "fb " + (ok ? "ok" : "no");
+        fb.textContent = ok ? "Richtig! " + erkl : "Noch nicht – probiere es im Applet aus.";
+      });
+      d.querySelector(".opts").appendChild(bt);
+    });
+    box.appendChild(d);
+  });
+}
+
+// ================================================================ 3 Aufgabentrainer
+const A = { auf: null, richtig: 0, gesamt: 0, tipps: 0, gezaehlt: false };
+const pr = p => de(p, p % 1 ? (p * 10 % 1 ? 2 : 1) : 0);
+const KONTEXTE = {
+  zins: () => { const p = pick([1.5, 2, 2.5, 3, 3.5, 4]), K = pick([500, 800, 1000, 1500, 2000, 2500, 3000, 5000]);
+    return { a: K, b: 1 + p / 100, p, art: "zu", ein: "€", zeit: "Jahren", txtA: `Ein Guthaben von ${ganz(K)} € wird mit ${pr(p)} % pro Jahr verzinst (Zinseszins).`,
+      wer: "das Guthaben", gross: "Kontostand", st: "Startkapital", sg: "Jahr", txtO: `Ein Guthaben wird mit ${pr(p)} % pro Jahr verzinst (Zinseszins).` }; },
+  wert: () => { const p = pick([10, 12, 15, 18, 20, 25]), W = pick([800, 1200, 15000, 20000, 24000, 30000]);
+    return { a: W, b: 1 - p / 100, p, art: "ab", ein: "€", zeit: "Jahren", txtA: `Ein Gerät im Wert von ${ganz(W)} € verliert jedes Jahr ${pr(p)} % seines Wertes.`,
+      wer: "der Wert", gross: "Wert", st: "Neupreis", sg: "Jahr", txtO: `Ein Gerät verliert jedes Jahr ${pr(p)} % seines Wertes.` }; },
+  bakt: () => { const f = pick([2, 3]), N = pick([50, 100, 200, 250, 500]);
+    return { a: N, b: f, p: (f - 1) * 100, art: "zu", ein: "Bakterien", zeit: "Stunden", txtA: `Eine Bakterienkultur mit ${N} Bakterien ${f === 2 ? "verdoppelt" : "verdreifacht"} sich jede Stunde.`,
+      wer: "die Anzahl", gross: "Anzahl", st: "Anfangsanzahl", sg: "Stunde", txtO: `Eine Bakterienkultur ${f === 2 ? "verdoppelt" : "verdreifacht"} sich jede Stunde.` }; },
+  medi: () => { const p = pick([10, 15, 20, 25, 30]), D = pick([200, 300, 400, 500, 800]);
+    return { a: D, b: 1 - p / 100, p, art: "ab", ein: "mg", zeit: "Stunden", txtA: `Von einem Medikament (Dosis ${D} mg) baut der Körper pro Stunde ${pr(p)} % ab.`,
+      wer: "die Wirkstoffmenge", gross: "Wirkstoffmenge", st: "Dosis", sg: "Stunde", txtO: `Von einem Medikament baut der Körper pro Stunde ${pr(p)} % ab.` }; },
+  follow: () => { const p = pick([5, 8, 10, 12, 20]), F = pick([200, 500, 1000, 2000, 5000]);
+    return { a: F, b: 1 + p / 100, p, art: "zu", ein: "Follower", zeit: "Wochen", txtA: `Ein Kanal hat ${ganz(F)} Follower. Ihre Zahl wächst jede Woche um ${pr(p)} %.`,
+      wer: "die Followerzahl", gross: "Followerzahl", st: "Startzahl", sg: "Woche", txtO: `Die Followerzahl eines Kanals wächst jede Woche um ${pr(p)} %.` }; },
+};
+function bTxt(b) { return deK(b, 4); }
+function aufgabe(typ) {
+  if (typ === 0) typ = pick([1, 2, 3, 4, 1, 2, 3, 4, 5, 6]);
+  const K = KONTEXTE[pick(Object.keys(KONTEXTE))]();
+  const ganzZahl = K.ein === "Bakterien" || K.ein === "Follower";
+  const nd = ganzZahl ? 0 : 2;
+  let t, loes, einh, h1, h2, lsg, label = "Ergebnis:", tol;
+  if (typ === 1) {
+    const x = rnd(2, 8), y = K.a * Math.pow(K.b, x);
+    t = `${K.txtA} Wie groß ist ${K.wer} nach ${x} ${K.zeit}?`;
+    loes = y; einh = K.ein;
+    h1 = `Stelle die Funktionsgleichung auf: a = ${ganz(K.a)}, b = ${bTxt(K.b)}${K.art === "zu" && K.ein !== "Bakterien" ? " (+" + pr(K.p) + " %)" : K.art === "ab" ? " (−" + pr(K.p) + " %)" : ""}.`;
+    h2 = `f(t) = ${ganz(K.a)} · ${bTxt(K.b)}${sup("t")} – setze t = ${x} ein.`;
+    lsg = `f(${x}) = ${ganz(K.a)} · ${bTxt(K.b)}${sup(x)} ≈ ${de(y, nd)} ${K.ein}`;
+  } else if (typ === 2) {
+    const x = rnd(2, 8), y = K.a * Math.pow(K.b, x), yR = +y.toFixed(nd);
+    t = `${K.txtO} Nach ${x} ${K.zeit} beträgt ${K.wer} ${de(yR, nd)} ${K.ein}. Wie groß war ${K.st === "Dosis" ? "die Dosis" : K.st === "Neupreis" ? "der Neupreis" : K.st === "Startkapital" ? "das Startkapital" : "die " + K.st}?`;
+    loes = yR / Math.pow(K.b, x); einh = K.ein;
+    h1 = `Ansatz: a · ${bTxt(K.b)}${sup(x)} = ${de(yR, nd)}`;
+    h2 = `Teile durch ${bTxt(K.b)}${sup(x)}: a = ${de(yR, nd)} : ${bTxt(K.b)}${sup(x)}`;
+    lsg = `a = ${de(yR, nd)} : ${bTxt(K.b)}${sup(x)} ≈ ${de(loes, nd)} ${K.ein}`;
+  } else if (typ === 3) {
+    const x = rnd(2, 10), y = +(K.a * Math.pow(K.b, x)).toFixed(nd);
+    const startTxt = { "€": `${ganz(K.a)} €`, "mg": `${K.a} mg`, "Bakterien": `${K.a} Bakterien`, "Follower": `${ganz(K.a)} Follower` }[K.ein];
+    t = `${K.gross} zu Beginn: ${startTxt}. Nach ${x} ${K.zeit}: ${de(y, nd)} ${K.ein}. Um wie viel Prozent ${K.art === "zu" ? "wächst" : "sinkt"} ${K.wer} pro ${K.sg}?`;
+    const b = Math.pow(y / K.a, 1 / x); loes = Math.abs(b - 1) * 100; einh = "%"; label = "Prozentsatz:";
+    h1 = `Ansatz: ${ganz(K.a)} · b${sup(x)} = ${de(y, nd)}  →  b${sup(x)} = ${de(y / K.a, 4)}`;
+    h2 = `b = ${x === 2 ? "" : sup(x)}√${de(y / K.a, 4)} – dann den Prozentsatz ablesen: |b − 1| · 100.`;
+    lsg = `b ≈ ${de(b, 4)}  →  ${K.art === "zu" ? "Zunahme" : "Abnahme"} um etwa ${de(loes, 2)} %`;
+    tol = 0.06;
+  } else if (typ === 4) {
+    const faktor = K.art === "zu" ? pick([2, 3, 1.5, 4]) : pick([0.5, 0.25, 0.1, 0.2]);
+    const ziel = K.a * faktor, zielT = ganzZahl ? ganz(ziel) : de(ziel, 2).replace(",00", "");
+    t = `${K.txtA} Nach wie vielen ${K.zeit} beträgt ${K.wer} ${zielT} ${K.ein}? (Runde auf zwei Nachkommastellen.)`;
+    loes = logb(K.b, faktor); einh = K.zeit;
+    h1 = `Ansatz: ${ganz(K.a)} · ${bTxt(K.b)}${sup("t")} = ${zielT}  →  ${bTxt(K.b)}${sup("t")} = ${deK(faktor)}`;
+    h2 = `Logarithmieren: t = log₍${bTxt(K.b)}₎(${deK(faktor)})`;
+    lsg = `t = log₍${bTxt(K.b)}₎(${deK(faktor)}) ≈ ${de(loes, 2)} ${K.zeit}`;
+  } else if (typ === 5) {
+    const b = pick([2, 3, 0.5, 1.5, 4, 0.4]), a = pick([1, 2, 3, 4, 5, 0.5, 10]);
+    let x1 = rnd(-1, 2), x2 = x1 + rnd(1, 3);
+    const y1 = a * Math.pow(b, x1), y2 = a * Math.pow(b, x2);
+    const zweit = Math.random() < 0.5;
+    t = `Der Graph von f(x) = a · bˣ geht durch P(${String(x1).replace("-", "−")} | ${deK(y1, 4)}) und Q(${x2} | ${deK(y2, 4)}). Bestimme ${zweit ? "a" : "b"}.`;
+    loes = zweit ? a : b; einh = ""; label = zweit ? "a =" : "b =";
+    h1 = `Teile die y-Werte: ${deK(y2, 4)} : ${deK(y1, 4)} = b${sup(x2 - x1)}`;
+    h2 = `b = ${x2 - x1 > 2 ? sup(x2 - x1) + "√" : x2 - x1 === 2 ? "√" : ""}${deK(y2 / y1, 4)} = ${deK(b)}; dann a = ${deK(y1, 4)} : ${deK(b)}${sup(String(x1).replace("-", "−"))}`;
+    lsg = `b = ${deK(b)}, a = ${deK(a)}  →  f(x) = ${a === 1 ? "" : deK(a) + " · "}${deK(b)}ˣ`;
+  } else {
+    const b = pick([2, 3, 4, 5, 10]), e = pick([-3, -2, -1, 0, 1, 2, 3, 4, 0.5]);
+    const y = Math.pow(b, e);
+    const yT = e === 0.5 ? `√${b}` : e < 0 ? `1/${ganz(Math.pow(b, -e))}` : ganz(y);
+    t = `Berechne ohne Taschenrechner: log₍${b}₎(${yT})`;
+    loes = e; einh = ""; label = "Ergebnis:";
+    h1 = `Frage dich: ${b} hoch wie viel ergibt ${yT}?`;
+    h2 = e < 0 ? `Negative Exponenten bedeuten Kehrwerte: ${b}⁻ⁿ = 1/${b}ⁿ` : e === 0.5 ? `Eine Wurzel ist der Exponent 0,5.` : `Probiere: ${b}¹, ${b}², ${b}³, …`;
+    lsg = `log₍${b}₎(${yT}) = ${deK(e).replace("-", "−")}, denn ${b}^{${deK(e).replace("-", "−")}} = ${yT}`;
+  }
+  return { typ, t, loes, einh, h1, h2, lsg, label, tol, nd: typ === 3 || typ === 4 ? 2 : nd };
+}
+const TYPNAME = { 1: "Typ 1 · Endwert", 2: "Typ 2 · Anfangswert", 3: "Typ 3 · Prozentsatz", 4: "Typ 4 · Zeit", 5: "Zwei Punkte", 6: "Logarithmus" };
+function aNeu() {
+  A.auf = aufgabe(+$("a_typ").value); A.tipps = 0; A.gezaehlt = false;
+  $("a_pill").textContent = TYPNAME[A.auf.typ]; $("a_text").innerHTML = html(A.auf.t);
+  $("a_lbl").textContent = A.auf.label; $("a_einheit").textContent = A.auf.einh;
+  $("a_in").value = ""; $("a_fb").textContent = ""; $("a_fb").className = "fb"; $("a_hints").innerHTML = "";
+  $("a_t2").disabled = true;
+}
+function aPruef() {
+  const v = parseFloat(($("a_in").value || "").replace(/\s/g, "").replace(/\./g, m => m).replace(",", "."));
+  const fb = $("a_fb");
+  if (!isFinite(v)) { fb.className = "fb no"; fb.textContent = "Bitte eine Zahl eingeben."; return; }
+  const L = A.auf.loes, tol = A.auf.tol ?? Math.max(0.011, Math.abs(L) * 0.0015);
+  const ok = Math.abs(v - L) <= tol || (A.auf.nd === 0 && Math.abs(v - L) <= 1);
+  if (!A.gezaehlt) { A.gesamt++; if (ok) A.richtig++; A.gezaehlt = true; }
+  $("a_score").textContent = `${A.richtig} / ${A.gesamt} richtig`;
+  fb.className = "fb " + (ok ? "ok" : "no");
+  fb.textContent = ok ? "Richtig! " + (A.tipps ? "" : "Ganz ohne Tipp – stark.") : "Das stimmt noch nicht. Schau dir einen Tipp an oder prüfe deine Rundung.";
+}
+function html(t) { return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/log₍([^₎]+)₎/g, "log<sub>$1</sub>").replace(/\^\{([^}]*)\}/g, "<sup>$1</sup>"); }
+function hint(text) { const d = document.createElement("div"); d.className = "hint"; d.innerHTML = html(text); $("a_hints").appendChild(d); }
+$("a_neu").addEventListener("click", aNeu);
+$("a_typ").addEventListener("change", aNeu);
+$("a_pruef").addEventListener("click", aPruef);
+$("a_in").addEventListener("keydown", e => { if (e.key === "Enter") aPruef(); });
+$("a_t1").addEventListener("click", () => { if (A.tipps < 1) { hint("Tipp 1: " + A.auf.h1); A.tipps = 1; $("a_t2").disabled = false; } });
+$("a_t2").addEventListener("click", () => { if (A.tipps < 2) { hint("Tipp 2: " + A.auf.h2); A.tipps = 2; } });
+$("a_loes").addEventListener("click", () => { if (A.tipps < 3) { hint("Lösung: " + A.auf.lsg); A.tipps = 3; if (!A.gezaehlt) { A.gesamt++; A.gezaehlt = true; $("a_score").textContent = `${A.richtig} / ${A.gesamt} richtig`; } } });
+
+// ================================================================ 4 Wuerfelzerfall
+const Wz = { verlauf: [], wuerfe: [], mittel: null };
+function wNeu() { const n0 = +$("w_n0").value; $("w_n0o").textContent = n0; Wz.verlauf = [n0]; Wz.wuerfe = Array(n0).fill(1); Wz.mittel = null; wZeichne(); }
+function wWurf() {
+  const n = Wz.verlauf[Wz.verlauf.length - 1]; if (n === 0) return;
+  Wz.wuerfe = Array.from({ length: n }, () => rnd(1, 6));
+  Wz.verlauf.push(Wz.wuerfe.filter(x => x !== 6).length);
+  wZeichne();
+}
+function wMittel() {
+  const n0 = +$("w_n0").value, R = 20, runden = 20, summe = Array(runden + 1).fill(0);
+  for (let r = 0; r < R; r++) { let n = n0; summe[0] += n; for (let k = 1; k <= runden; k++) { let m = 0; for (let i = 0; i < n; i++) if (Math.random() >= 1 / 6) m++; n = m; summe[k] += n; } }
+  Wz.mittel = summe.map(s => s / R);
+}
+function wuerfelBild(ctx, x, y, s, z, sechs) {
+  ctx.fillStyle = sechs ? css("--curve-2") : css("--panel"); ctx.strokeStyle = css("--ink-3"); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, s, s, s * 0.18) : ctx.rect(x, y, s, s); ctx.fill(); ctx.stroke();
+  const P = { 1: [[.5, .5]], 2: [[.27, .27], [.73, .73]], 3: [[.25, .25], [.5, .5], [.75, .75]], 4: [[.27, .27], [.73, .27], [.27, .73], [.73, .73]],
+    5: [[.25, .25], [.75, .25], [.5, .5], [.25, .75], [.75, .75]], 6: [[.27, .22], [.73, .22], [.27, .5], [.73, .5], [.27, .78], [.73, .78]] }[z];
+  ctx.fillStyle = sechs ? "#fff" : css("--ink");
+  P.forEach(([px, py]) => { ctx.beginPath(); ctx.arc(x + px * s, y + py * s, s * 0.08, 0, 2 * Math.PI); ctx.fill(); });
+}
+function wZeichne() {
+  const n0 = +$("w_n0").value, runde = Wz.verlauf.length - 1, n = Wz.verlauf[runde];
+  $("w_runde").textContent = `Runde ${runde}`; $("w_n").textContent = n;
+  // Wuerfel
+  const cv = $("w_dice"), { ctx, w, h } = setupCanvas(cv); ctx.clearRect(0, 0, w, h);
+  const anz = Wz.wuerfe.length;
+  if (anz) {
+    const spalten = Math.ceil(Math.sqrt(anz * w / h)), zeilen = Math.ceil(anz / spalten);
+    const s = Math.min((w - 8) / spalten, (h - 8) / zeilen) * 0.86, gap = s * 0.16;
+    Wz.wuerfe.forEach((z, i) => wuerfelBild(ctx, 4 + (i % spalten) * (s + gap), 4 + Math.floor(i / spalten) * (s + gap), s, z, z === 6 && runde > 0));
+  } else { ctx.fillStyle = css("--ink-3"); ctx.font = "15px system-ui"; ctx.textAlign = "center"; ctx.fillText("Alle Würfel sind zerfallen.", w / 2, h / 2); }
+  // Graph
+  const pv = $("w_plot"), P = setupCanvas(pv), rmax = Math.max(12, runde + 2);
+  const { X, Y } = achsen(P.ctx, P.w, P.h, [0, rmax], [0, n0 * 1.08], { xl: "Wurf n", yl: "N", sx: rmax > 16 ? 2 : 1 });
+  const mod = k => n0 * Math.pow(5 / 6, k);
+  if ($("w_modell").checked) kurve(P.ctx, X, Y, mod, [0, rmax], [0, n0], css("--curve"), 2.2);
+  if ($("w_mittel").checked) { if (!Wz.mittel) wMittel(); Wz.mittel.forEach((m, k) => k <= rmax && punkt(P.ctx, X(k), Y(m), css("--ok"), 3.5)); }
+  Wz.verlauf.forEach((m, k) => punkt(P.ctx, X(k), Y(m), css("--curve-2"), 4.5));
+  // Tabelle
+  let html = `<tr><th>Wurf n</th><th>übrig (Experiment)</th>${$("w_modell").checked ? "<th>Modell</th>" : ""}${$("w_mittel").checked ? "<th>Mittel aus 20</th>" : ""}</tr>`;
+  Wz.verlauf.forEach((m, k) => { html += `<tr><td>${k}</td><td>${m}</td>${$("w_modell").checked ? `<td>${de(mod(k), 1)}</td>` : ""}${$("w_mittel").checked ? `<td>${de(Wz.mittel[k] ?? NaN, 1)}</td>` : ""}</tr>`; });
+  $("w_table").innerHTML = html; const box = $("w_table").parentElement; box.scrollTop = box.scrollHeight;
+  $("w_wurf").disabled = n === 0; $("w_alle").disabled = n === 0;
+}
+$("w_wurf").addEventListener("click", wWurf);
+$("w_alle").addEventListener("click", () => { for (let i = 0; i < 10; i++) { const n = Wz.verlauf[Wz.verlauf.length - 1]; if (!n) break; Wz.wuerfe = Array.from({ length: n }, () => rnd(1, 6)); Wz.verlauf.push(Wz.wuerfe.filter(x => x !== 6).length); } wZeichne(); });
+$("w_neu").addEventListener("click", wNeu);
+$("w_n0").addEventListener("input", wNeu);
+$("w_modell").addEventListener("change", wZeichne);
+$("w_mittel").addEventListener("change", () => { Wz.mittel = null; wZeichne(); });
+
+// ---------------------------------------------------------------- Start
+function alles() {
+  if ($("t1").classList.contains("on")) zZeichne();
+  if ($("t2").classList.contains("on")) pZeichne();
+  if ($("t4").classList.contains("on")) wZeichne();
+}
+zInit(); pQuiz(); aNeu(); wNeu();
+try {
+  const th = localStorage.getItem("ew_theme"); if (th) document.documentElement.dataset.theme = th;
+  const tab = new URLSearchParams(location.search).get("w") || localStorage.getItem("ew_tab");
+  const map = { "1": "t1", "2": "t2", "3": "t3", "4": "t4" };
+  const ziel = map[tab] || tab;
+  if (ziel && $(ziel)) document.querySelector(`nav button[data-t="${ziel}"]`).click();
+} catch (e) {}
+alles();
+let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(alles, 120); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", alles);
+</script>
+</body>
+</html>
